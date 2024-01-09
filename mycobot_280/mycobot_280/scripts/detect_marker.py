@@ -4,9 +4,9 @@ import cv2 as cv
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
-import tf
-from tf.broadcaster import TransformBroadcaster
+from tf2_ros import TransformBroadcaster
 import tf_conversions
+import geometry_msgs
 from mycobot_communication.srv import (
     GetCoords,
     SetCoords,
@@ -20,8 +20,9 @@ class ImageConverter:
     def __init__(self):
         self.br = TransformBroadcaster()
         self.bridge = CvBridge()
-        self.aruco_dict = cv.aruco.Dictionary_get(cv.aruco.DICT_6X6_250)
-        self.aruo_params = cv.aruco.DetectorParameters_create()
+        dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_6X6_250)
+        parameters = cv.aruco.DetectorParameters()
+        self.detector = cv.aruco.ArucoDetector(dictionary, parameters)
         calibrationParams = cv.FileStorage(
             "calibrationFileName.xml", cv.FILE_STORAGE_READ
         )
@@ -56,7 +57,7 @@ class ImageConverter:
             )
         gray = cv.cvtColor(cv_image, cv.COLOR_BGR2GRAY)
         # detect aruco marker.检测 aruco 标记
-        ret = cv.aruco.detectMarkers(gray, self.aruco_dict, parameters=self.aruo_params)
+        ret = self.detector.detectMarkers(gray)
         corners, ids = ret[0], ret[1]
         # process marker data.处理标记数据
         if len(corners) > 0:
@@ -78,7 +79,7 @@ class ImageConverter:
                 # just select first one detected marker.只需选择第一个检测到的标记。
                 for i in range(rvec.shape[0]):
                     cv.aruco.drawDetectedMarkers(cv_image, corners)
-                    cv.aruco.drawAxis(
+                    cv.drawFrameAxes(
                         cv_image,
                         self.camera_matrix,
                         self.dist_coeffs,
@@ -92,15 +93,24 @@ class ImageConverter:
 
                 # get quaternion for ros. 为ros获取四元数
                 euler = rvec[0, 0, :]
-                tf_change = tf.transformations.quaternion_from_euler(
+                tf_change = tf_conversions.transformations.quaternion_from_euler(
                     euler[0], euler[1], euler[2]
                 )
                 print("tf_change:", tf_change)
 
                 # trans pose according [joint1]，根据 [joint1] 变换姿势
-                self.br.sendTransform(
-                    xyz, tf_change, rospy.Time.now(), "basic_shapes", "joint6_flange"
-                )
+                t = geometry_msgs.msg.TransformStamped()
+                t.header.stamp = rospy.Time.now() 
+                t.header.frame_id = "joint1"
+                t.child_frame_id = 'basic_shape'
+                t.transform.translation.x = xyz[0] 
+                t.transform.translation.y = xyz[1]
+                t.transform.translation.z = xyz[2]
+                t.transform.rotation.x = tf_change[0]
+                t.transform.rotation.y = tf_change[1]
+                t.transform.rotation.z = tf_change[2]
+                t.transform.rotation.w = tf_change[3]
+                self.br.sendTransform(t)
 
         # [x, y, z, -172, 3, -46.8]
         cv.imshow("Image", cv_image)

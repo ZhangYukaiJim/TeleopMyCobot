@@ -1,0 +1,14 @@
+<launch>
+
+	<arg name="num" default="0" />
+
+    <include file="$(find mycobot_280_moveit)/launch/mycobot_moveit.launch">
+    </include>
+
+    <!-- vision node -->
+	<node name="opencv_camera" pkg="mycobot_280" type="opencv_camera" args="$(arg num)"/>
+	<node name="detect_marker" pkg="mycobot_280" type="detect_marker.py" />
+	<node name="following_marker" pkg="mycobot_280" type="following_marker.py" />
+
+
+</launch>

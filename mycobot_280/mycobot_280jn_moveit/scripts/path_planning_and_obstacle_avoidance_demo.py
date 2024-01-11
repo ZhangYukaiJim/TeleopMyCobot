@@ -78,7 +78,7 @@ class MoveItPlanningDemo:
 
         # Control the motion of the robotic arm according to the planned motion path
         # 按照规划的运动路径控制机械臂运动
-        self.arm.execute(traj)
+        self.arm.execute(traj[1])
         rospy.sleep(1)
 
         # Control the terminal of the robotic arm to move 5cm to the right. Parameter 1 represents y, 0,1,2,3,4,5 represents xyzrpy

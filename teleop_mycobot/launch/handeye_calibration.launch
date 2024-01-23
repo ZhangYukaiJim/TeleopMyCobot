@@ -1,0 +1,31 @@
+<launch>
+
+    <arg name="size" default="10x7" />
+    <arg name="square" default="0.025" />
+
+    <!-- vision node -->
+    <node name="camera" pkg="usb_cam" type="usb_cam_node" output="screen">
+        <param name="video_device" value="/dev/video0" />
+        <param name="image_width" value="1920" />
+        <param name="image_height" value="1080" />
+        <param name="framerate" value="30" />
+        <param name="pixel_format" value="mjpeg" />
+        <param name="camera_frame_id" value="usb_cam" />
+        <param name="io_method" value="mmap" />
+    </node>
+
+    <!-- check camera view -->
+    <node name="image_view" pkg="image_view" type="image_view" respawn="false" output="screen">
+        <remap from="image" to="/camera/image_raw" />
+    </node>
+
+    <!-- launch moveit -->
+    <include file="$(find mycobot_280jn_moveit)/launch/mycobot_moveit.launch">
+    </include>
+
+    <!-- use the real robot-->
+    <node name="mycobot_reciver" pkg="mycobot_280jn_moveit" type="sync_plan.py">
+    </node>
+
+
+</launch>

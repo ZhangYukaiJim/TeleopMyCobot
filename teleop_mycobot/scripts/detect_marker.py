@@ -7,6 +7,7 @@ from sensor_msgs.msg import Image, CameraInfo
 from tf2_ros import TransformBroadcaster
 import tf_conversions
 import geometry_msgs
+
 # from mycobot_communication.srv import (
 #     GetCoords,
 #     SetCoords,
@@ -20,12 +21,13 @@ class ImageConverter:
     def __init__(self):
         self.br = TransformBroadcaster()
         self.bridge = CvBridge()
-        self.dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_6X6_250)
+        self.dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
         self.parameters = cv.aruco.DetectorParameters()
-        calibrationParams:CameraInfo = rospy.wait_for_message('/camera/camera_info', CameraInfo)
-        rospy.loginfo(calibrationParams)
+        calibrationParams: CameraInfo = rospy.wait_for_message(
+            "/camera/camera_info", CameraInfo
+        )
         self.dist_coeffs = calibrationParams.D
-        self.camera_matrix = calibrationParams.K
+        self.camera_matrix = np.reshape(calibrationParams.K, (3, 3))
         # subscriber, listen wether has img come in. 订阅者，监听是否有img
         self.image_sub = rospy.Subscriber("/camera/image_raw", Image, self.callback)
 
@@ -55,7 +57,9 @@ class ImageConverter:
             )
         gray = cv.cvtColor(cv_image, cv.COLOR_BGR2GRAY)
         # detect aruco marker.检测 aruco 标记
-        corners, ids, rejectedImgPoints = cv.aruco.detectMarkers(gray, self.dictionary, self.parameters)
+        corners, ids, rejectedImgPoints = cv.aruco.detectMarkers(
+            gray, self.dictionary, parameters=self.parameters
+        )
         # corners, ids = ret[0], ret[1]
         # process marker data.处理标记数据
         if len(corners) > 0:
@@ -72,7 +76,7 @@ class ImageConverter:
                 (rvec, tvec) = (ret[0], ret[1])
                 (rvec - tvec).any()
 
-                print("rvec:", rvec, "tvec:", tvec)
+                # rospy.loginfo("rvec:" + str(rvec) + "tvec:" + str(tvec))
 
                 # just select first one detected marker.只需选择第一个检测到的标记。
                 for i in range(rvec.shape[0]):
@@ -98,10 +102,10 @@ class ImageConverter:
 
                 # trans pose according [joint1]，根据 [joint1] 变换姿势
                 t = geometry_msgs.msg.TransformStamped()
-                t.header.stamp = rospy.Time.now() 
-                t.header.frame_id = "joint1"
-                t.child_frame_id = 'basic_shape'
-                t.transform.translation.x = xyz[0] 
+                t.header.stamp = rospy.Time.now()
+                t.header.frame_id = "usb_cam"
+                t.child_frame_id = "basic_shape"
+                t.transform.translation.x = xyz[0]
                 t.transform.translation.y = xyz[1]
                 t.transform.translation.z = xyz[2]
                 t.transform.rotation.x = tf_change[0]

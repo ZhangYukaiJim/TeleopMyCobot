@@ -22,12 +22,12 @@ class ImageConverter:
         self.bridge = CvBridge()
         self.dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_6X6_250)
         self.parameters = cv.aruco.DetectorParameters()
-        calibrationParams = rospy.wait_for_message('/camera/camera_info', CameraInfo)
+        calibrationParams:CameraInfo = rospy.wait_for_message('/camera/camera_info', CameraInfo)
         rospy.loginfo(calibrationParams)
-        self.dist_coeffs = calibrationParams.getNode("distCoeffs").mat()
-        self.camera_matrix = None
+        self.dist_coeffs = calibrationParams.D
+        self.camera_matrix = calibrationParams.K
         # subscriber, listen wether has img come in. 订阅者，监听是否有img
-        self.image_sub = rospy.Subscriber("/camera/image", Image, self.callback)
+        self.image_sub = rospy.Subscriber("/camera/image_raw", Image, self.callback)
 
     def callback(self, data):
         """Callback function.
@@ -55,8 +55,8 @@ class ImageConverter:
             )
         gray = cv.cvtColor(cv_image, cv.COLOR_BGR2GRAY)
         # detect aruco marker.检测 aruco 标记
-        ret = cv.detectMarkers(gray, self.dictionary, self.parameters)
-        corners, ids = ret[0], ret[1]
+        corners, ids, rejectedImgPoints = cv.aruco.detectMarkers(gray, self.dictionary, self.parameters)
+        # corners, ids = ret[0], ret[1]
         # process marker data.处理标记数据
         if len(corners) > 0:
             if ids is not None:

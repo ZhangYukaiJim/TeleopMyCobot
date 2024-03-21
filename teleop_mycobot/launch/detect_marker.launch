@@ -1,0 +1,5 @@
+<launch>
+    <node pkg="teleop_mycobot" name="detect_marker" type="detect_marker.py">
+    </node>
+
+</launch>

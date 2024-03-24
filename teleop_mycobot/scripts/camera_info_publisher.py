@@ -1,9 +1,13 @@
+#!/usr/bin/env python
+
 import rospy
+import yaml
 from sensor_msgs.msg import CameraInfo
 
 
 class CameraInfoPublisher:
     def __init__(self):
+        rospy.init_node("camera_info_publisher", anonymous=True)
         self.camera_info_pub = rospy.Publisher(
             "/camera/camera_info", CameraInfo, queue_size=10
         )
@@ -13,6 +17,10 @@ class CameraInfoPublisher:
         if camera_info_file is not None:
             self.load_camera_info(camera_info_file)
             self.camera_info_loaded = True
+        else:
+            rospy.logerr(
+                "No camera_info_file parameter specified. CameraInfo publisher will not start."
+            )
 
     def load_camera_info(self, camera_info_file):
         with open(camera_info_file, "r") as f:
@@ -35,3 +43,14 @@ class CameraInfoPublisher:
         camera_info_msg.R = self.camera_info["rectification_matrix"]["data"]
         camera_info_msg.P = self.camera_info["projection_matrix"]["data"]
         self.camera_info_pub.publish(camera_info_msg)
+
+
+if __name__ == "__main__":
+    try:
+        camera_info_publisher = CameraInfoPublisher()
+        rate = rospy.Rate(10)  # Define the publishing rate
+        while not rospy.is_shutdown():
+            camera_info_publisher.publish_camera_info()
+            rate.sleep()
+    except rospy.ROSInterruptException:
+        pass

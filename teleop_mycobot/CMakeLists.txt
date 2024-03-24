@@ -167,6 +167,7 @@ catkin_install_python(PROGRAMS
   scripts/path_planning_and_obstacle_avoidance_demo.py 
   scripts/detect_marker.py
   scripts/camera_publisher.py
+  scripts/camera_info_publisher.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

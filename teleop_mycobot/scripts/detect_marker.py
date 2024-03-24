@@ -22,7 +22,7 @@ class ImageConverter:
         self.br = TransformBroadcaster()
         self.bridge = CvBridge()
         self.dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
-        self.parameters = cv.aruco.DetectorParameters()
+        self.parameters = cv.aruco.DetectorParameters_create()
         calibrationParams: CameraInfo = rospy.wait_for_message(
             "/camera/camera_info", CameraInfo
         )

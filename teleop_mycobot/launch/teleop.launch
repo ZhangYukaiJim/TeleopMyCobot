@@ -20,7 +20,4 @@
 	<!-- Start detect_marker node -->
 	<node pkg="teleop_mycobot" type="detect_marker.py" name="detect_marker" output="screen" />
 
-	<node pkg="teleop_mycobot" type="path_planning_and_obstacle_avoidance_demo.py"
-		name="moveit_ik_demo" />
-
 </launch>

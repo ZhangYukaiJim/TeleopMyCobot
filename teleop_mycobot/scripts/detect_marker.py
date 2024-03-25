@@ -71,7 +71,7 @@ class ImageConverter:
                 #   marker corners,标记角
                 #   marker size (meter),标记尺寸（米）
                 ret = cv.aruco.estimatePoseSingleMarkers(
-                    corners, 0.05, self.camera_matrix, self.dist_coeffs
+                    corners, 0.034, self.camera_matrix, self.dist_coeffs
                 )
                 (rvec, tvec) = (ret[0], ret[1])
                 (rvec - tvec).any()

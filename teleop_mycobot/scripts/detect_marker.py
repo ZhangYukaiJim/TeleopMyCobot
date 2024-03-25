@@ -4,132 +4,76 @@ import cv2 as cv
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image, CameraInfo
-from tf2_ros import TransformBroadcaster
+from visualization_msgs.msg import Marker, MarkerArray
+import tf2_ros
 import tf_conversions
-import geometry_msgs
-
-# from mycobot_communication.srv import (
-#     GetCoords,
-#     SetCoords,
-#     GetAngles,
-#     SetAngles,
-#     GripperStatus,
-# )
+import geometry_msgs.msg
 
 
 class ImageConverter:
     def __init__(self):
-        self.br = TransformBroadcaster()
+        self.br = tf2_ros.TransformBroadcaster()
         self.bridge = CvBridge()
         self.dictionary = cv.aruco.getPredefinedDictionary(cv.aruco.DICT_4X4_250)
         self.parameters = cv.aruco.DetectorParameters_create()
-        calibrationParams: CameraInfo = rospy.wait_for_message(
-            "/camera/camera_info", CameraInfo
+        self.marker_publisher = rospy.Publisher(
+            "/aruco_markers", MarkerArray, queue_size=10
         )
+        calibrationParams = rospy.wait_for_message("/camera/camera_info", CameraInfo)
         self.dist_coeffs = calibrationParams.D
         self.camera_matrix = np.reshape(calibrationParams.K, (3, 3))
-        # subscriber, listen wether has img come in. 订阅者，监听是否有img
         self.image_sub = rospy.Subscriber("/camera/image_raw", Image, self.callback)
 
     def callback(self, data):
-        """Callback function.
-
-        Process image with OpenCV, detect Mark to get the pose. Then acccording the
-        pose to transforming.
-        """
         try:
-            # trans `rgb` to `gbr` for opencv. 将 `rgb` 转换为 opencv 的 `gbr`。
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
             print(e)
-        size = cv_image.shape
-        focal_length = size[1]
-        center = [size[1] / 2, size[0] / 2]
-        if self.camera_matrix is None:
-            # calc the camera matrix, if don't have.如果没有，则计算相机矩阵
-            self.camera_matrix = np.array(
-                [
-                    [focal_length, 0, center[0]],
-                    [0, focal_length, center[1]],
-                    [0, 0, 1],
-                ],
-                dtype=np.float32,
-            )
+            return
+
         gray = cv.cvtColor(cv_image, cv.COLOR_BGR2GRAY)
-        # detect aruco marker.检测 aruco 标记
         corners, ids, rejectedImgPoints = cv.aruco.detectMarkers(
             gray, self.dictionary, parameters=self.parameters
         )
-        # corners, ids = ret[0], ret[1]
-        # process marker data.处理标记数据
+
         if len(corners) > 0:
-            if ids is not None:
-                # print('corners:', corners, 'ids:', ids)
-
-                # detect marker pose. 检测marker位姿。
-                # argument:
-                #   marker corners,标记角
-                #   marker size (meter),标记尺寸（米）
+            marker_array = MarkerArray()
+            for i in range(len(corners)):
                 ret = cv.aruco.estimatePoseSingleMarkers(
-                    corners, 0.034, self.camera_matrix, self.dist_coeffs
+                    corners[i], 0.034, self.camera_matrix, self.dist_coeffs
                 )
-                (rvec, tvec) = (ret[0], ret[1])
-                (rvec - tvec).any()
+                (rvec, tvec) = (ret[0][0], ret[1][0])
+                marker = Marker()
+                marker.header.frame_id = "usb_cam"
+                marker.header.stamp = rospy.Time.now()
+                marker.id = ids[i][0]
+                marker.type = Marker.CUBE
+                marker.action = Marker.ADD
+                marker.pose.position.x = tvec[0][0]
+                marker.pose.position.y = tvec[0][1]
+                marker.pose.position.z = tvec[0][2]
+                marker.pose.orientation.x = rvec[0][0]
+                marker.pose.orientation.y = rvec[0][1]
+                marker.pose.orientation.z = rvec[0][2]
+                marker.scale.x = 0.034
+                marker.scale.y = 0.034
+                marker.scale.z = 0.005
+                marker.color.a = 1.0
+                marker.color.r = 0.0
+                marker.color.g = 1.0
+                marker.color.b = 0.0
 
-                # rospy.loginfo("rvec:" + str(rvec) + "tvec:" + str(tvec))
+                marker_array.markers.append(marker)
 
-                # just select first one detected marker.只需选择第一个检测到的标记。
-                for i in range(rvec.shape[0]):
-                    cv.aruco.drawDetectedMarkers(cv_image, corners)
-                    cv.drawFrameAxes(
-                        cv_image,
-                        self.camera_matrix,
-                        self.dist_coeffs,
-                        rvec[i, :, :],
-                        tvec[i, :, :],
-                        0.03,
-                    )
-
-                xyz = tvec[0, 0, :]
-                xyz = [xyz[0] - 0.045, xyz[1], xyz[2] - 0.03]
-
-                # get quaternion for ros. 为ros获取四元数
-                euler = rvec[0, 0, :]
-                tf_change = tf_conversions.transformations.quaternion_from_euler(
-                    euler[0], euler[1], euler[2]
-                )
-                print("tf_change:", tf_change)
-
-                # trans pose according [joint1]，根据 [joint1] 变换姿势
-                t = geometry_msgs.msg.TransformStamped()
-                t.header.stamp = rospy.Time.now()
-                t.header.frame_id = "usb_cam"
-                t.child_frame_id = "basic_shape"
-                t.transform.translation.x = xyz[0]
-                t.transform.translation.y = xyz[1]
-                t.transform.translation.z = xyz[2]
-                t.transform.rotation.x = tf_change[0]
-                t.transform.rotation.y = tf_change[1]
-                t.transform.rotation.z = tf_change[2]
-                t.transform.rotation.w = tf_change[3]
-                self.br.sendTransform(t)
-
-        # [x, y, z, -172, 3, -46.8]
-        cv.imshow("Image", cv_image)
-
-        cv.waitKey(3)
-        try:
-            pass
-        except CvBridgeError as e:
-            print(e)
+            self.marker_publisher.publish(marker_array)
 
 
 if __name__ == "__main__":
     try:
         rospy.init_node("detect_marker")
-        rospy.loginfo("Starting cv_bridge_test node")
+        rospy.loginfo("Starting detect_marker node")
         ImageConverter()
         rospy.spin()
     except KeyboardInterrupt:
-        print("Shutting down cv_bridge_test node.")
+        print("Shutting down detect_marker node.")
         cv.destroyAllWindows()

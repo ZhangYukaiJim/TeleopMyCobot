@@ -63,6 +63,9 @@ class CameraPublisher:
                     camera_info_msg.D = self.camera_info["distortion_coefficients"][
                         "data"
                     ]
+                    camera_info_msg.distortion_model = self.camera_info[
+                        "distortion_model"
+                    ]
                     camera_info_msg.R = self.camera_info["rectification_matrix"]["data"]
                     camera_info_msg.P = self.camera_info["projection_matrix"]["data"]
                     self.camera_info_pub.publish(camera_info_msg)

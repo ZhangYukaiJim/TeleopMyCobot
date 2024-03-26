@@ -1,0 +1,13 @@
+<launch>
+    <arg name="size" default="10x7" />
+    <arg name="square" default="0.025" />
+
+    <include file="$(find teleop_mycobot)/launch/start_video_stream_camera.launch" />
+
+    <node
+        name="cameracheck" pkg="camera_calibration" type="cameracheck.py" output="screen"
+        args=" -&#45;size $(arg size) -&#45;square $(arg square) monocular:=/camera image:=image_rect"
+    />
+
+
+</launch>

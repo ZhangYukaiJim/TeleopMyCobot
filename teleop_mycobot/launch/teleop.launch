@@ -1,21 +1,10 @@
 <launch>
 
+	<!-- Include camera_pose.launch -->
+	<include file="$(find teleop_mycobot)/launch/start_video_stream_camera.launch" />
+
 	<!-- Include mycobot_moveit.launch -->
 	<include file="$(find mycobot_280jn_moveit)/launch/mycobot_moveit.launch" />
-
-	<!-- Include camera_pose.launch -->
-	<include file="$(find teleop_mycobot)/launch/camera_pose.launch" />
-
-
-	<!-- Start camera_info_publisher node -->
-	<node pkg="teleop_mycobot" type="camera_info_publisher.py" name="camera_info_publisher"
-		output="screen">
-		<param name="camera_info_file" type="string"
-			value="$(find teleop_mycobot)/config/head_camera.yaml" />
-	</node>
-
-	<!-- Start camera_publisher node -->
-	<node pkg="teleop_mycobot" type="camera_publisher.py" name="camera_publisher" output="screen" />
 
 	<!-- Start detect_marker node -->
 	<node pkg="teleop_mycobot" type="detect_marker.py" name="detect_marker" output="screen" />

@@ -43,11 +43,17 @@ class CameraPublisher:
             if ret:
                 ros_image_msg = self.bridge.cv2_to_imgmsg(frame, "bgr8")
                 ros_image_msg.header.frame_id = "usb_cam"
+                timestamp = rospy.Time.now()  # Get current time stamp
+                ros_image_msg.header.stamp = (
+                    timestamp  # Set timestamp for Image message
+                )
                 self.image_pub.publish(ros_image_msg)
 
                 if self.camera_info_loaded:
                     camera_info_msg = CameraInfo()
-                    camera_info_msg.header.stamp = rospy.Time.now()
+                    camera_info_msg.header.stamp = (
+                        timestamp  # Set timestamp for CameraInfo message
+                    )
                     camera_info_msg.header.frame_id = (
                         "camera_frame"  # Set the frame ID here
                     )

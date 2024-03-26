@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import rospy
 import yaml
 from sensor_msgs.msg import CameraInfo

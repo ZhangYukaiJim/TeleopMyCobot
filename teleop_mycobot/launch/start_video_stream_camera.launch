@@ -15,7 +15,7 @@
 
     <!-- Provide rectification -->
     <node pkg="image_proc" type="image_proc" name="image_proc"
-        ns="$(arg cam_name)" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " />
+        ns="$(arg cam_name)" />
 
     <!-- View the raw and rectified output -->
     <node pkg="image_view" type="image_view" name="image_view">

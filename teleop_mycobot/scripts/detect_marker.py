@@ -43,6 +43,18 @@ class ImageConverter:
                     corners[i], 0.034, self.camera_matrix, self.dist_coeffs
                 )
                 (rvec, tvec) = (ret[0][0], ret[1][0])
+
+                # get quaternion for ros. 为ros获取四元数
+                euler = rvec[0, :]
+                rotation_matrix = np.array(
+                    [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 1]],
+                    dtype=float,
+                )
+                rotation_matrix[:3, :3], _ = cv.Rodrigues(euler)
+                # convert the matrix to a quaternion
+                quaternion = tf_conversions.transformations.quaternion_from_matrix(
+                    rotation_matrix
+                )
                 marker = Marker()
                 marker.header.frame_id = "usb_cam"
                 marker.header.stamp = rospy.Time.now()
@@ -52,9 +64,10 @@ class ImageConverter:
                 marker.pose.position.x = tvec[0][0]
                 marker.pose.position.y = tvec[0][1]
                 marker.pose.position.z = tvec[0][2]
-                marker.pose.orientation.x = rvec[0][0]
-                marker.pose.orientation.y = rvec[0][1]
-                marker.pose.orientation.z = rvec[0][2]
+                marker.pose.orientation.x = quaternion[0]
+                marker.pose.orientation.y = quaternion[1]
+                marker.pose.orientation.z = quaternion[2]
+                marker.pose.orientation.w = quaternion[3]
                 marker.scale.x = 0.034
                 marker.scale.y = 0.034
                 marker.scale.z = 0.005

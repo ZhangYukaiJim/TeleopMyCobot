@@ -1,12 +1,12 @@
 <launch>
 
 	<!-- Include camera_pose.launch -->
-	<include file="$(find teleop_mycobot)/launch/start_video_stream_camera.launch" />
+	<include file="$(find my_vision)/launch/start_video_stream_camera.launch" />
 
 	<!-- Include mycobot_moveit.launch -->
 	<include file="$(find mycobot_280jn_moveit)/launch/mycobot_moveit.launch" />
 
 	<!-- Start detect_marker node -->
-	<node pkg="teleop_mycobot" type="detect_marker.py" name="detect_marker" output="screen" />
+	<node pkg="my_vision" type="detect_marker.py" name="detect_marker" output="screen" />
 
 </launch>

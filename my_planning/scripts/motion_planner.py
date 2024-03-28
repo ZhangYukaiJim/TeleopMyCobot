@@ -8,11 +8,6 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 class MoveItPlanner:
     def __init__(self):
-        # Subscribe to target poses
-        self.target_pose_sub = rospy.Subscriber(
-            "/target_pose", PoseStamped, self.callback
-        )
-
         # API to initialize move_group,初始化move_group的API
         moveit_commander.roscpp_initialize(sys.argv)
 
@@ -26,7 +21,9 @@ class MoveItPlanner:
 
         # Initialize self.arm group in the robotic arm that needs to be controlled by move group
         # 初始化需要使用move group控制的机械臂中的self.arm group
-        self.arm = moveit_commander.MoveGroupCommander("arm_group")
+        self.arm: moveit_commander.MoveGroupCommander = (
+            moveit_commander.MoveGroupCommander("arm_group")
+        )
 
         # Get the name of the terminal link,获取终端link的名称
         self.end_effector_link = self.arm.get_end_effector_link()
@@ -52,10 +49,12 @@ class MoveItPlanner:
         rospy.Subscriber("target_pose", PoseStamped, self.callback)
         rospy.spin()
 
-    def callback(self, data):
-        rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
+    def callback(self, pose: PoseStamped):
+        rospy.loginfo(rospy.get_caller_id() + "I heard %s", pose)
+        # Transform received pose to reference frame
+
         self.arm.set_start_state_to_current_state()
-        self.arm.set_pose_target(data.data, self.end_effector_link)
+        self.arm.set_pose_target(pose, self.end_effector_link)
         traj = self.arm.plan()
         self.arm.execute(traj[1])
         rospy.sleep(1)

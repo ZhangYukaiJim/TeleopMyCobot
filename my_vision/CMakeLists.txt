@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(teleop_mycobot)
+project(my_vision)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -8,13 +8,14 @@ project(teleop_mycobot)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  actionlib
-  moveit_msgs
-  mycobot_communication
-  mycobot_description
-  roscpp
+  camera_calibration
+  image_proc
+  image_view
+  mycobot_280jn_moveit
   rospy
   std_msgs
+  tf2_ros
+  usb_cam
 )
 
 ## System dependencies are found with CMake's conventions
@@ -74,7 +75,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   moveit_msgs#   std_msgs
+#   std_msgs
 # )
 
 ################################################
@@ -108,8 +109,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES teleop_mycobot
-#  CATKIN_DEPENDS actionlib moveit_msgs mycobot_communication mycobot_description roscpp rospy std_msgs
+#  LIBRARIES my_vision
+#  CATKIN_DEPENDS camera_calibration image_proc image_view mycobot_280jn_moveit rospy std_msgs tf2_ros usb_cam
 #  DEPENDS system_lib
 )
 
@@ -126,7 +127,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/teleop_mycobot.cpp
+#   src/${PROJECT_NAME}/my_vision.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -137,7 +138,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/teleop_mycobot_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/my_vision_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -164,7 +165,8 @@ include_directories(
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  scripts/path_planning_and_obstacle_avoidance_demo.py 
+  scripts/detect_marker.py
+  scripts/camera_publisher.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -201,7 +203,7 @@ catkin_install_python(PROGRAMS
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_teleop_mycobot.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_my_vision.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

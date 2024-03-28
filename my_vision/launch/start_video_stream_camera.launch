@@ -5,13 +5,13 @@
 
 
     <!-- Start camera_publisher node -->
-    <node pkg="teleop_mycobot" type="camera_publisher.py" name="camera_publisher" output="screen">
+    <node pkg="my_vision" type="camera_publisher.py" name="camera_publisher" output="screen">
         <param name="camera_info_file" type="string"
             value="$(find teleop_mycobot)/config/head_camera.yaml" />
     </node>
 
     <!-- Include camera_pose.launch -->
-    <include file="$(find teleop_mycobot)/launch/camera_pose.launch" />
+    <include file="$(find my_vision)/launch/camera_pose.launch" />
 
     <!-- Provide rectification -->
     <node pkg="image_proc" type="image_proc" name="image_proc"

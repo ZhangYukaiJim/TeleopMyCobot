@@ -7,7 +7,7 @@
 	<include file="$(find mycobot_280jn_moveit)/launch/mycobot_moveit.launch" />
 
 	<!-- Include joy.launch-->
-	<include file="$(find my_teleop)/launch/joy.launch" />
+	<include file="$(find teleop_mycobot)/launch/joy.launch" />
 
 	<!-- Start detect_marker node -->
 	<node pkg="my_vision" type="detect_marker.py" name="detect_marker" output="screen" />
